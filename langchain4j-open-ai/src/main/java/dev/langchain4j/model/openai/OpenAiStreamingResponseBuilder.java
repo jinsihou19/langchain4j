@@ -73,6 +73,7 @@ public class OpenAiStreamingResponseBuilder {
         }
 
         String content = delta.content();
+        // fix #2289 use streaming with tools
         if (!isNullOrEmpty(content)) {
             contentBuilder.append(content);
             return;
