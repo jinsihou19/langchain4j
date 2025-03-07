@@ -28,6 +28,6 @@ public interface ChatMessage {
      * @deprecated use accessors of {@link SystemMessage}, {@link UserMessage},
      * {@link AiMessage} and {@link ToolExecutionResultMessage} instead
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated
     String text();
 }

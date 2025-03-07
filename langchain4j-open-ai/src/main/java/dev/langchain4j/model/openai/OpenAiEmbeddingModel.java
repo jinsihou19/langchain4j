@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 import static dev.langchain4j.internal.RetryUtils.withRetry;
 import static dev.langchain4j.internal.Utils.getOrDefault;
@@ -100,7 +101,7 @@ public class OpenAiEmbeddingModel extends DimensionAwareEmbeddingModel implement
 
         List<String> texts = textSegments.stream()
                 .map(TextSegment::text)
-                .toList();
+                .collect(Collectors.toList());
 
         return embedTexts(texts);
     }
@@ -118,7 +119,7 @@ public class OpenAiEmbeddingModel extends DimensionAwareEmbeddingModel implement
 
         List<Embedding> embeddings = response.data().stream()
                 .map(openAiEmbedding -> Embedding.from(openAiEmbedding.embedding()))
-                .toList();
+                .collect(Collectors.toList());
 
         return Response.from(
                 embeddings,
@@ -136,7 +137,7 @@ public class OpenAiEmbeddingModel extends DimensionAwareEmbeddingModel implement
      * if necessary, other parameters.
      * <b>The default value for the model name will be removed in future releases!</b>
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public static OpenAiEmbeddingModel withApiKey(String apiKey) {
         return builder().apiKey(apiKey).build();
     }

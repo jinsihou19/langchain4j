@@ -1,7 +1,6 @@
 package dev.langchain4j.internal;
 
-import com.google.gson.annotations.SerializedName;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -13,7 +12,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.google.gson.annotations.SerializedName;
+import org.junit.jupiter.api.Test;
 
 class JsonTest {
 
@@ -26,15 +26,13 @@ class JsonTest {
 
     String json = Json.toJson(testData);
 
-    // language=json
     assertThat(json)
       .isEqualTo(
-        """
-        {
-          "sampleDate": "2023-01-15",
-          "sampleDateTime": "2023-01-15T10:20:00",
-          "some_value": "value"
-        }"""
+        "{\n" +
+        "  \"sampleDate\": \"2023-01-15\",\n" +
+        "  \"sampleDateTime\": \"2023-01-15T10:20:00\",\n" +
+        "  \"some_value\": \"value\"\n" +
+        "}"
       );
 
     TestData deserializedData = Json.fromJson(json, TestData.class);
@@ -51,7 +49,6 @@ class JsonTest {
             new TestObject("Jane", LocalDate.of(2021, 8, 16), LocalDateTime.of(2021, 8, 16, 13, 19))
     );
 
-    // language=json
     String expectedJson = "[{" +
             "\"name\":\"John\"," +
             "\"date\":\"2021-08-17\"," +
@@ -70,7 +67,16 @@ class JsonTest {
     }
   }
 
-  private record TestObject(String name, LocalDate date, LocalDateTime dateTime) {
+  private static class TestObject {
+    private final String name;
+    private final LocalDate date;
+    private final LocalDateTime dateTime;
+
+    public TestObject(String name, LocalDate date, LocalDateTime dateTime) {
+      this.name = name;
+      this.date = date;
+      this.dateTime = dateTime;
+    }
   }
 
   private static class TestData {

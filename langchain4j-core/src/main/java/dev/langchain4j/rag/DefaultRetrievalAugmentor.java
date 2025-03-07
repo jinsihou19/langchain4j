@@ -23,20 +23,14 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import static dev.langchain4j.internal.Utils.getOrDefault;
 import static dev.langchain4j.internal.ValidationUtils.ensureNotNull;
-import static java.util.Collections.emptyMap;
-import static java.util.Collections.singletonList;
-import static java.util.Collections.singletonMap;
 import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 /**
@@ -96,11 +90,8 @@ import static java.util.stream.Collectors.toMap;
  * Nonetheless, you are encouraged to use one of the advanced ready-to-use implementations or create a custom one.
  * <br>
  * <br>
- * When there is only a single {@link Query} and a single {@link ContentRetriever},
- * query routing and content retrieval are performed in the same thread.
- * Otherwise, an {@link Executor} is used to parallelize the processing.
- * By default, a modified (keepAliveTime is 1 second instead of 60 seconds) {@link Executors#newCachedThreadPool()}
- * is used, but you can provide a custom {@link Executor} instance.
+ * By default, query routing and content retrieval are performed concurrently (for efficiency)
+ * using {@link Executors#newCachedThreadPool()}, but you can provide a custom {@link Executor}.
  *
  * @see DefaultQueryTransformer
  * @see DefaultQueryRouter
@@ -126,15 +117,7 @@ public class DefaultRetrievalAugmentor implements RetrievalAugmentor {
         this.queryRouter = ensureNotNull(queryRouter, "queryRouter");
         this.contentAggregator = getOrDefault(contentAggregator, DefaultContentAggregator::new);
         this.contentInjector = getOrDefault(contentInjector, DefaultContentInjector::new);
-        this.executor = getOrDefault(executor, DefaultRetrievalAugmentor::createDefaultExecutor);
-    }
-
-    private static ExecutorService createDefaultExecutor() {
-        return new ThreadPoolExecutor(
-            0, Integer.MAX_VALUE,
-            1, SECONDS,
-            new SynchronousQueue<>()
-        );
+        this.executor = getOrDefault(executor, Executors::newCachedThreadPool);
     }
 
     /**
@@ -158,7 +141,20 @@ public class DefaultRetrievalAugmentor implements RetrievalAugmentor {
         Collection<Query> queries = queryTransformer.transform(originalQuery);
         logQueries(originalQuery, queries);
 
-        Map<Query, Collection<List<Content>>> queryToContents = process(queries);
+        Map<Query, CompletableFuture<Collection<List<Content>>>> queryToFutureContents = new ConcurrentHashMap<>();
+        queries.forEach(query -> {
+            CompletableFuture<Collection<List<Content>>> futureContents =
+                    supplyAsync(() -> {
+                                Collection<ContentRetriever> retrievers = queryRouter.route(query);
+                                log(query, retrievers);
+                                return retrievers;
+                            },
+                            executor
+                    ).thenCompose(retrievers -> retrieveFromAll(retrievers, query));
+            queryToFutureContents.put(query, futureContents);
+        });
+
+        Map<Query, Collection<List<Content>>> queryToContents = join(queryToFutureContents);
 
         List<Content> contents = contentAggregator.aggregate(queryToContents);
         log(queryToContents, contents);
@@ -167,55 +163,23 @@ public class DefaultRetrievalAugmentor implements RetrievalAugmentor {
         log(augmentedChatMessage);
 
         return AugmentationResult.builder()
-            .chatMessage(augmentedChatMessage)
-            .contents(contents)
-            .build();
-    }
-
-    private Map<Query, Collection<List<Content>>> process(Collection<Query> queries) {
-        if (queries.size() == 1) {
-            Query query = queries.iterator().next();
-            Collection<ContentRetriever> retrievers = queryRouter.route(query);
-            if (retrievers.size() == 1) {
-                ContentRetriever contentRetriever = retrievers.iterator().next();
-                List<Content> contents = contentRetriever.retrieve(query);
-                return singletonMap(query, singletonList(contents));
-            } else if (retrievers.size() > 1) {
-                Collection<List<Content>> contents = retrieveFromAll(retrievers, query).join();
-                return singletonMap(query, contents);
-            } else {
-                return emptyMap();
-            }
-        } else if (queries.size() > 1) {
-            Map<Query, CompletableFuture<Collection<List<Content>>>> queryToFutureContents = new ConcurrentHashMap<>();
-            queries.forEach(query -> {
-                CompletableFuture<Collection<List<Content>>> futureContents =
-                    supplyAsync(() -> {
-                            Collection<ContentRetriever> retrievers = queryRouter.route(query);
-                            log(query, retrievers);
-                            return retrievers;
-                        },
-                        executor
-                    ).thenCompose(retrievers -> retrieveFromAll(retrievers, query));
-                queryToFutureContents.put(query, futureContents);
-            });
-            return join(queryToFutureContents);
-        } else {
-            return emptyMap();
-        }
+                .chatMessage(augmentedChatMessage)
+                .contents(contents)
+                .build();
     }
 
     private CompletableFuture<Collection<List<Content>>> retrieveFromAll(Collection<ContentRetriever> retrievers,
                                                                          Query query) {
         List<CompletableFuture<List<Content>>> futureContents = retrievers.stream()
-            .map(retriever -> supplyAsync(() -> retrieve(retriever, query), executor))
-            .toList();
+                .map(retriever -> supplyAsync(() -> retrieve(retriever, query), executor))
+                .collect(toList());
 
         return allOf(futureContents.toArray(new CompletableFuture[0]))
-            .thenApply(ignored ->
-                futureContents.stream()
-                    .map(CompletableFuture::join)
-                    .toList());
+                .thenApply(ignored ->
+                        futureContents.stream()
+                                .map(CompletableFuture::join)
+                                .collect(toList())
+                );
     }
 
     private static List<Content> retrieve(ContentRetriever retriever, Query query) {
@@ -225,15 +189,15 @@ public class DefaultRetrievalAugmentor implements RetrievalAugmentor {
     }
 
     private static Map<Query, Collection<List<Content>>> join(
-        Map<Query, CompletableFuture<Collection<List<Content>>>> queryToFutureContents) {
+            Map<Query, CompletableFuture<Collection<List<Content>>>> queryToFutureContents) {
         return allOf(queryToFutureContents.values().toArray(new CompletableFuture[0]))
-            .thenApply(ignored ->
-                queryToFutureContents.entrySet().stream()
-                    .collect(toMap(
-                        Map.Entry::getKey,
-                        entry -> entry.getValue().join()
-                    ))
-            ).join();
+                .thenApply(ignored ->
+                        queryToFutureContents.entrySet().stream()
+                                .collect(toMap(
+                                        Map.Entry::getKey,
+                                        entry -> entry.getValue().join()
+                                ))
+                ).join();
     }
 
     private static void logQueries(Query originalQuery, Collection<Query> queries) {
@@ -241,14 +205,14 @@ public class DefaultRetrievalAugmentor implements RetrievalAugmentor {
             Query transformedQuery = queries.iterator().next();
             if (!transformedQuery.equals(originalQuery)) {
                 log.debug("Transformed original query '{}' into '{}'",
-                    originalQuery.text(), transformedQuery.text());
+                        originalQuery.text(), transformedQuery.text());
             }
-        } else if (log.isDebugEnabled()){
+        } else {
             log.debug("Transformed original query '{}' into the following queries:\n{}",
-                originalQuery.text(), queries.stream()
-                    .map(Query::text)
-                    .map(query -> "- '" + query + "'")
-                    .collect(joining("\n")));
+                    originalQuery.text(), queries.stream()
+                            .map(Query::text)
+                            .map(query -> "- '" + query + "'")
+                            .collect(joining("\n")));
         }
     }
 
@@ -256,40 +220,27 @@ public class DefaultRetrievalAugmentor implements RetrievalAugmentor {
         // TODO use retriever id
         if (retrievers.size() == 1) {
             log.debug("Routing query '{}' to the following retriever: {}",
-                query.text(), retrievers.iterator().next());
-        } else if (log.isDebugEnabled()) {
+                    query.text(), retrievers.iterator().next());
+        } else {
             log.debug("Routing query '{}' to the following retrievers:\n{}",
-                query.text(), retrievers.stream()
-                    .map(retriever -> "- " + retriever.toString())
-                    .collect(joining("\n")));
+                    query.text(), retrievers.stream()
+                            .map(retriever -> "- " + retriever.toString())
+                            .collect(joining("\n")));
         }
     }
 
     private static void log(Query query, ContentRetriever retriever, List<Content> contents) {
         // TODO use retriever id
         log.debug("Retrieved {} contents using query '{}' and retriever '{}'",
-            contents.size(), query.text(), retriever);
+                contents.size(), query.text(), retriever);
 
-        if (!log.isTraceEnabled()) {
-            return;
-        }
-
-        if (!contents.isEmpty()) {
-            final var contentsSting = contents.stream()
-                .map(Content::textSegment)
-                .map(segment -> "- " + escapeNewlines(segment.text()))
-                .collect(joining("\n"));
+        if (contents.size() > 0) {
             log.trace("Retrieved {} contents using query '{}' and retriever '{}':\n{}",
-                contents.size(),
-                query.text(),
-                retriever.getClass().getName(),
-                contentsSting);
-        } else {
-            log.trace("Retrieved 0 contents using query '{}' and retriever '{}'",
-                query.text(),
-                retriever.getClass().getName());
+                    contents.size(), query.text(), retriever, contents.stream()
+                            .map(Content::textSegment)
+                            .map(segment -> "- " + escapeNewlines(segment.text()))
+                            .collect(joining("\n")));
         }
-
     }
 
     private static void log(Map<Query, Collection<List<Content>>> queryToContents, List<Content> contents) {
@@ -306,21 +257,15 @@ public class DefaultRetrievalAugmentor implements RetrievalAugmentor {
 
         log.debug("Aggregated {} content(s) into {}", contentCount, contents.size());
 
-        if (log.isTraceEnabled()) {
-            log.trace("Aggregated {} content(s) into:\n{}",
+        log.trace("Aggregated {} content(s) into:\n{}",
                 contentCount, contents.stream()
-                    .map(Content::textSegment)
-                    .map(segment -> "- " + escapeNewlines(segment.text()))
-                    .collect(joining("\n")));
-        }
+                        .map(Content::textSegment)
+                        .map(segment -> "- " + escapeNewlines(segment.text()))
+                        .collect(joining("\n")));
     }
 
     private static void log(ChatMessage augmentedChatMessage) {
-        if (log.isTraceEnabled()) {
-            log.trace("Augmented chat message: {}",
-                escapeNewlines(augmentedChatMessage.text())
-            );
-        }
+        log.trace("Augmented chat message: {}", escapeNewlines(augmentedChatMessage.text()));
     }
 
     private static String escapeNewlines(String text) {

@@ -25,6 +25,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -80,11 +81,14 @@ class StreamingAiServicesWithToolsIT {
         @Tool("returns amount of a given transaction")
         Double getTransactionAmount(@P("ID of a transaction") String id) {
             System.out.printf("called getTransactionAmount(%s)%n", id);
-            return switch (id) {
-                case "T001" -> 11.1;
-                case "T002" -> 22.2;
-                default -> throw new IllegalArgumentException("Unknown transaction ID: " + id);
-            };
+            switch (id) {
+                case "T001":
+                    return 11.1;
+                case "T002":
+                    return 22.2;
+                default:
+                    throw new IllegalArgumentException("Unknown transaction ID: " + id);
+            }
         }
     }
 
@@ -144,7 +148,7 @@ class StreamingAiServicesWithToolsIT {
                 .name("currentTemperature")
                 .parameters(JsonObjectSchema.builder()
                         .addStringProperty("arg0")
-                        .addEnumProperty("arg1", List.of("CELSIUS", "fahrenheit", "Kelvin"))
+                        .addEnumProperty("arg1", Arrays.asList("CELSIUS", "fahrenheit", "Kelvin"))
                         .required("arg0", "arg1")
                         .build())
                 .build();
@@ -282,7 +286,7 @@ class StreamingAiServicesWithToolsIT {
 
     private static Map<String, Object> toMap(String arguments) {
         try {
-            return new ObjectMapper().readValue(arguments, new TypeReference<>() {
+            return new ObjectMapper().readValue(arguments, new TypeReference<Map<String, Object>>() {
             });
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);

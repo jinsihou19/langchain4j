@@ -25,7 +25,8 @@ public class Not implements Filter {
 
     public boolean equals(final Object o) {
         if (o == this) return true;
-        if (!(o instanceof Not other)) return false;
+        if (!(o instanceof Not)) return false;
+        Not other = (Not) o;
         return Objects.equals(this.expression, other.expression);
     }
 

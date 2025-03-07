@@ -14,7 +14,7 @@ import static java.util.stream.Collectors.toList;
  * @param <T> the type of the items.
  * @deprecated Please use {@link ContentRetriever} instead.
  */
-@Deprecated(forRemoval = true)
+@Deprecated
 public interface Retriever<T> {
 
     /**

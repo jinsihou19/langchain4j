@@ -407,7 +407,7 @@ public abstract class AiServices<T> {
      * related to the current user message from an underlying source (e.g., embedding store).
      * This relevant information is automatically injected into the message sent to the LLM.
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public AiServices<T> retriever(Retriever<TextSegment> retriever) {
         if (contentRetrieverSet || retrievalAugmentorSet) {
             throw illegalConfiguration("Only one out of [retriever, contentRetriever, retrievalAugmentor] can be set");

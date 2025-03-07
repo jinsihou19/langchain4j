@@ -52,11 +52,11 @@ class DefaultContentInjectorTest {
         UserMessage injected = injector.inject(contents, userMessage);
 
         // then
-        assertThat(injected.text()).isEqualTo("""
-                Tell me about bananas.
-                
-                Answer using the following information:
-                Bananas are awesome!""".stripIndent()
+        assertThat(injected.text()).isEqualTo(
+                "Tell me about bananas.\n" +
+                        "\n" +
+                        "Answer using the following information:\n" +
+                        "Bananas are awesome!"
         );
     }
 
@@ -74,11 +74,10 @@ class DefaultContentInjectorTest {
 
         // then
         assertThat(injected.text()).isEqualTo(
-                """
-                        Tell me about bananas.
-                        
-                        Answer using the following information:
-                        Bananas are awesome!"""
+                "Tell me about bananas.\n" +
+                        "\n" +
+                        "Answer using the following information:\n" +
+                        "Bananas are awesome!"
         );
         assertThat(injected.name()).isEqualTo("ape");
     }
@@ -104,12 +103,11 @@ class DefaultContentInjectorTest {
 
         // then
         assertThat(injected.text()).isEqualTo(
-                """
-                        Tell me about bananas.
-                        
-                        Answer using the following information:
-                        content: Bananas are awesome!
-                        source: trust me bro"""
+                "Tell me about bananas.\n" +
+                        "\n" +
+                        "Answer using the following information:\n" +
+                        "content: Bananas are awesome!\n" +
+                        "source: trust me bro"
         );
     }
 
@@ -131,13 +129,12 @@ class DefaultContentInjectorTest {
 
         // then
         assertThat(injected.text()).isEqualTo(
-                """
-                        Tell me about bananas.
-                        
-                        Answer using the following information:
-                        Bananas are awesome!
-                        
-                        Bananas are healthy!"""
+                "Tell me about bananas.\n" +
+                        "\n" +
+                        "Answer using the following information:\n" +
+                        "Bananas are awesome!\n" +
+                        "\n" +
+                        "Bananas are healthy!"
         );
     }
 
@@ -171,17 +168,16 @@ class DefaultContentInjectorTest {
 
         // then
         assertThat(injected.text()).isEqualTo(
-                """
-                        Tell me about bananas.
-                        
-                        Answer using the following information:
-                        content: Bananas are awesome!
-                        source: trust me bro
-                        date: today
-                        
-                        content: Bananas are healthy!
-                        source: my doctor
-                        reliability: 100%"""
+                "Tell me about bananas.\n" +
+                        "\n" +
+                        "Answer using the following information:\n" +
+                        "content: Bananas are awesome!\n" +
+                        "source: trust me bro\n" +
+                        "date: today\n" +
+                        "\n" +
+                        "content: Bananas are healthy!\n" +
+                        "source: my doctor\n" +
+                        "reliability: 100%"
         );
     }
 
@@ -219,11 +215,10 @@ class DefaultContentInjectorTest {
 
         // then
         assertThat(injected.text()).isEqualTo(
-                """
-                        Tell me about bananas.
-                        Bananas are awesome!
-                        
-                        Bananas are healthy!"""
+                "Tell me about bananas.\n" +
+                        "Bananas are awesome!\n" +
+                        "\n" +
+                        "Bananas are healthy!"
         );
     }
 
