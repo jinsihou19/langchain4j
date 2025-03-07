@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.spi.FileTypeDetector;
 import java.util.Collections;
@@ -135,7 +136,7 @@ public class CustomMimeTypesFileTypeDetector extends FileTypeDetector {
     }
 
     public String probeContentType(String path) {
-        return probeContentType(Path.of(path));
+        return probeContentType(Paths.get(path));
     }
 
     /**
@@ -148,7 +149,7 @@ public class CustomMimeTypesFileTypeDetector extends FileTypeDetector {
      */
     public String probeContentType(URI uri) {
         // First let's try to guess via the Path
-        Path path = Path.of(uri.getPath());
+        Path path = Paths.get(uri.getPath());
         String mimeTypeFromPath = probeContentType(path);
         if (mimeTypeFromPath != null) {
             return mimeTypeFromPath;

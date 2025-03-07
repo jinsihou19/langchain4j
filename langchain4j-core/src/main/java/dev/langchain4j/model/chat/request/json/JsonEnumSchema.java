@@ -8,6 +8,7 @@ import java.util.Objects;
 
 import static dev.langchain4j.internal.Utils.quoted;
 import static dev.langchain4j.internal.ValidationUtils.ensureNotEmpty;
+import static java.util.Arrays.asList;
 
 @Experimental
 public class JsonEnumSchema implements JsonSchemaElement {
@@ -48,7 +49,7 @@ public class JsonEnumSchema implements JsonSchemaElement {
         }
 
         public Builder enumValues(String... enumValues) {
-            return enumValues(List.of(enumValues));
+            return enumValues(asList(enumValues));
         }
 
         public JsonEnumSchema build() {

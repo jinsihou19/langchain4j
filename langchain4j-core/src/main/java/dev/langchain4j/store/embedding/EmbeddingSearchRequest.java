@@ -66,7 +66,8 @@ public class EmbeddingSearchRequest {
 
     public boolean equals(final Object o) {
         if (o == this) return true;
-        if (!(o instanceof EmbeddingSearchRequest other)) return false;
+        if (!(o instanceof  EmbeddingSearchRequest)) return false;
+        EmbeddingSearchRequest other = (EmbeddingSearchRequest) o;
         return this.maxResults == other.maxResults
                 && this.minScore == other.minScore
                 && Objects.equals(this.queryEmbedding, other.queryEmbedding)

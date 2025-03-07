@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import static dev.langchain4j.agent.tool.JsonSchemaProperty.type;
@@ -626,32 +627,116 @@ class AiServicesWithToolsIT {
         }
     }
 
-    static record Query(
+    static class Query {
+        final List<String> select;
+        final List<Condition> where;
+        final Integer limit;
+        final Integer offset;
 
-        @Description("List of fields to fetch records")
-        List<String> select,
+        public Query(
+                List<String> select,
+                List<Condition> where,
+                Integer limit,
+                Integer offset) {
+            this.select = select;
+            this.where = where;
+            this.limit = limit;
+            this.offset = offset;
+        }
 
-        @Description("List of conditions to filter on. Pass null if no condition")
-        List<Condition> where,
+        public List<String> select() {
+            return select;
+        }
 
-        @Description("limit on number of records")
-        Integer limit,
+        public List<Condition> where() {
+            return where;
+        }
 
-        @Description("offset for fetching records")
-        Integer offset)
-    {}
+        public Integer limit() {
+            return limit;
+        }
 
-    static record Condition(
+        public Integer offset() {
+            return offset;
+        }
 
-        @Description("Field to filter on")
-        String field,
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Query query = (Query) o;
+            return Objects.equals(select, query.select) &&
+                    Objects.equals(where, query.where) &&
+                    Objects.equals(limit, query.limit) &&
+                    Objects.equals(offset, query.offset);
+        }
 
-        @Description("Operator to apply")
-        Operator operator,
+        @Override
+        public int hashCode() {
+            return Objects.hash(select, where, limit, offset);
+        }
 
-        @Description("Value to compare with")
-        String value)
-    {}
+        @Override
+        public String toString() {
+            return "Query[" +
+                    "select=" + select +
+                    ", where=" + where +
+                    ", limit=" + limit +
+                    ", offset=" + offset +
+                    ']';
+        }
+    }
+
+    static class Condition {
+        final String field;
+        final Operator operator;
+        final String value;
+
+        public Condition(
+                String field,
+                Operator operator,
+                String value) {
+            this.field = field;
+            this.operator = operator;
+            this.value = value;
+        }
+
+        public String field() {
+            return field;
+        }
+
+        public Operator operator() {
+            return operator;
+        }
+
+        public String value() {
+            return value;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Condition condition = (Condition) o;
+            return Objects.equals(field, condition.field) &&
+                    Objects.equals(operator, condition.operator) &&
+                    Objects.equals(value, condition.value);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(field, operator, value);
+        }
+
+        @Override
+        public String toString() {
+            return "Condition[" +
+                    "field=" + field +
+                    ", operator=" + operator +
+                    ", value=" + value +
+                    ']';
+        }
+    }
 
     enum Operator {
 

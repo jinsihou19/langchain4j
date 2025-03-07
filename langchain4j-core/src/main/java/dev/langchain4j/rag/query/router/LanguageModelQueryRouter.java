@@ -46,13 +46,12 @@ public class LanguageModelQueryRouter implements QueryRouter {
     private static final Logger log = LoggerFactory.getLogger(LanguageModelQueryRouter.class);
 
     public static final PromptTemplate DEFAULT_PROMPT_TEMPLATE = PromptTemplate.from(
-            """
-                    Based on the user query, determine the most suitable data source(s) \
-                    to retrieve relevant information from the following options:
-                    {{options}}
-                    It is very important that your answer consists of either a single number \
-                    or multiple numbers separated by commas and nothing else!
-                    User query: {{query}}"""
+            "Based on the user query, determine the most suitable data source(s) " +
+                    "to retrieve relevant information from the following options:\n" +
+                    "{{options}}\n" +
+                    "It is very important that your answer consists of either a single number " +
+                    "or multiple numbers separated by commas and nothing else!\n" +
+                    "User query: {{query}}"
     );
 
     protected final ChatLanguageModel chatLanguageModel;
@@ -111,17 +110,17 @@ public class LanguageModelQueryRouter implements QueryRouter {
     }
 
     protected Collection<ContentRetriever> fallback(Query query, Exception e) {
-        return switch (fallbackStrategy) {
-            case DO_NOT_ROUTE -> {
+        switch (fallbackStrategy) {
+            case DO_NOT_ROUTE:
                 log.debug("Fallback: query '{}' will not be routed", query.text());
-                yield emptyList();
-            }
-            case ROUTE_TO_ALL -> {
+                return emptyList();
+            case ROUTE_TO_ALL:
                 log.debug("Fallback: query '{}' will be routed to all available content retrievers", query.text());
-                yield new ArrayList<>(idToRetriever.values());
-            }
-            default -> throw new RuntimeException(e);
-        };
+                return new ArrayList<>(idToRetriever.values());
+            case FAIL:
+            default:
+                throw new RuntimeException(e);
+        }
     }
 
     protected Prompt createPrompt(Query query) {

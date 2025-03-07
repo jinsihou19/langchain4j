@@ -39,10 +39,11 @@ public class IsIn implements Filter {
 
     @Override
     public boolean test(Object object) {
-        if (!(object instanceof Metadata metadata)) {
+        if (!(object instanceof Metadata)) {
             return false;
         }
 
+        Metadata metadata = (Metadata) object;
         if (!metadata.containsKey(key)) {
             return false;
         }
@@ -62,8 +63,8 @@ public class IsIn implements Filter {
 
     public boolean equals(final Object o) {
         if (o == this) return true;
-        if (!(o instanceof IsIn other)) return false;
-
+        if (!(o instanceof IsIn)) return false;
+        IsIn other = (IsIn) o;
         return Objects.equals(this.key, other.key)
                 && Objects.equals(this.comparisonValues, other.comparisonValues);
     }

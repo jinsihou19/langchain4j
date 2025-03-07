@@ -80,7 +80,7 @@ public class Document {
      * {@link Metadata#getInteger(String)}, {@link Metadata#getLong(String)}, {@link Metadata#getFloat(String)},
      * {@link Metadata#getDouble(String)} instead.
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public String metadata(String key) {
         return metadata.get(key);
     }

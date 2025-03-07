@@ -2,12 +2,10 @@ package dev.langchain4j.store.embedding.filter.comparison;
 
 import dev.langchain4j.data.document.Metadata;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.mockito.MockedConstruction;
-import org.mockito.Mockito;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,7 +25,9 @@ class IsGreaterThanTest extends AbstractComparisonTest<IsGreaterThan>{
         "6, true"
     })
     void testComparisonValue(Integer value, boolean expectedResult) {
-        Metadata metadata = Metadata.from(Map.of("key", value));
+        Map<String, Integer> t = new LinkedHashMap<>();
+        t.put("key", value);
+        Metadata metadata = Metadata.from(t);
         assertThat(subject.test(metadata)).isEqualTo(expectedResult);
     }
 

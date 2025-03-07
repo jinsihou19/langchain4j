@@ -15,6 +15,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 import static dev.langchain4j.internal.RetryUtils.withRetry;
 import static dev.langchain4j.internal.Utils.getOrDefault;
@@ -106,7 +107,7 @@ public class OpenAiModerationModel implements ModerationModel {
     public Response<Moderation> moderate(List<ChatMessage> messages) {
         List<String> inputs = messages.stream()
                 .map(ChatMessage::text)
-                .toList();
+                .collect(Collectors.toList());
 
         return moderateInternal(inputs);
     }
@@ -116,7 +117,7 @@ public class OpenAiModerationModel implements ModerationModel {
      * if necessary, other parameters.
      * <b>The default value for the model name will be removed in future releases!</b>
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public static OpenAiModerationModel withApiKey(String apiKey) {
         return builder().apiKey(apiKey).build();
     }

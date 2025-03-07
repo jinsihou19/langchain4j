@@ -17,6 +17,7 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -197,7 +198,7 @@ public abstract class AiServicesWithJsonSchemaIT {
                                     .name("Person")
                                     .rootElement(JsonObjectSchema.builder()
                                             .addStringProperty("name")
-                                            .addEnumProperty("maritalStatus", List.of("SINGLE", "MARRIED"))
+                                            .addEnumProperty("maritalStatus", Arrays.asList("SINGLE", "MARRIED"))
                                             .required("name", "maritalStatus")
                                             .build())
                                     .build())

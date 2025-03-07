@@ -57,10 +57,11 @@ public class TypeUtils {
             throw new IllegalArgumentException("returnType parameter cannot be null.");
         }
 
-        if (!(returnType instanceof ParameterizedType type)) {
+        if (!(returnType instanceof ParameterizedType)) {
             return new Type[0];
         }
 
+        ParameterizedType type = (ParameterizedType) returnType;
         Type[] typeArguments = type.getActualTypeArguments();
 
         if (typeArguments.length == 0) {
@@ -100,8 +101,9 @@ public class TypeUtils {
     }
 
     private static void validateReturnTypesAreProperlyParametrized(String methodName, Type type, List<Type> typeChain) {
-        if (type instanceof ParameterizedType parameterizedType) {
+        if (type instanceof ParameterizedType) {
             // Recursively check all parametrized types
+            ParameterizedType parameterizedType = (ParameterizedType) type;
             for (Type actualTypeArgument : parameterizedType.getActualTypeArguments()) {
                 typeChain.add(parameterizedType);
                 validateReturnTypesAreProperlyParametrized(methodName, actualTypeArgument, typeChain);
@@ -114,13 +116,15 @@ public class TypeUtils {
             // Type variable: Result<T> ask(String question)
             typeChain.add(type);
             throw genericNotProperlySpecifiedException(methodName, typeChain);
-        } else if (type instanceof Class<?> clazz && clazz.getTypeParameters().length > 0) {
-            //  Raw type:  Result ask(String question)
-            typeChain.add(type);
-            throw genericNotProperlySpecifiedException(methodName, typeChain);
+        } else if (type instanceof Class<?>) {
+            Class<?> clazz = (Class<?>) type;
+            if (clazz.getTypeParameters().length > 0) {
+                //  Raw type:  Result ask(String question)
+                typeChain.add(type);
+                throw genericNotProperlySpecifiedException(methodName, typeChain);
+            }
         }
     }
-
 
     private static IllegalArgumentException genericNotProperlySpecifiedException(String methodName, List<Type> typeChain) {
 
@@ -142,7 +146,9 @@ public class TypeUtils {
                 return TypeUtils.getRawClass(type).getSimpleName();
             }
         }).collect(Collectors.joining("<")));
-        actualDeclaration.append(">".repeat(Math.max(0, typeChain.size() - 1)));
+        for (int i = 0; i < typeChain.size() - 1; i++) {
+            actualDeclaration.append(">");
+        }
         return actualDeclaration.toString();
     }
 
@@ -150,7 +156,9 @@ public class TypeUtils {
         List<Type> rawTypesOnly = typeChain.stream().filter(type -> !(type instanceof WildcardType || type instanceof TypeVariable)).collect(toList());
         StringBuilder declarationExample = new StringBuilder(rawTypesOnly.stream().map(type -> TypeUtils.getRawClass(type).getSimpleName()).collect(Collectors.joining("<")));
         declarationExample.append("<").append(forType);
-        declarationExample.append(">".repeat(rawTypesOnly.size()));
+        for (int i = 0; i < rawTypesOnly.size(); i++) {
+            declarationExample.append(">");
+        }
         return declarationExample.toString();
     }
 

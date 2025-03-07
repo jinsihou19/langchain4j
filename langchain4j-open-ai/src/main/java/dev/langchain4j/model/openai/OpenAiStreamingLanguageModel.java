@@ -122,7 +122,7 @@ public class OpenAiStreamingLanguageModel implements StreamingLanguageModel, Tok
      * if necessary, other parameters.
      * <b>The default values for the model name and temperature will be removed in future releases!</b>
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public static OpenAiStreamingLanguageModel withApiKey(String apiKey) {
         return builder().apiKey(apiKey).build();
     }

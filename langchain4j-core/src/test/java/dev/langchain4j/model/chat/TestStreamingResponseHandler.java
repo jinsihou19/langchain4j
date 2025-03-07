@@ -3,10 +3,9 @@ package dev.langchain4j.model.chat;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.model.StreamingResponseHandler;
 import dev.langchain4j.model.output.Response;
+import lombok.SneakyThrows;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import static dev.langchain4j.internal.Exceptions.illegalArgument;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -27,7 +26,8 @@ public class TestStreamingResponseHandler<T> implements StreamingResponseHandler
     public void onComplete(Response<T> response) {
 
         String expectedTextContent = textContentBuilder.toString();
-        if (response.content() instanceof AiMessage aiMessage) {
+        if (response.content() instanceof AiMessage) {
+            AiMessage aiMessage = (AiMessage) response.content();
             if (aiMessage.hasToolExecutionRequests()){
                 assertThat(aiMessage.toolExecutionRequests().size()).isGreaterThan(0);
             } else {
@@ -47,14 +47,8 @@ public class TestStreamingResponseHandler<T> implements StreamingResponseHandler
         futureResponse.completeExceptionally(error);
     }
 
-    public Response<T> get()  {
-        try {
-            return futureResponse.get(30, SECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-        } catch (ExecutionException | TimeoutException e) {
-            throw new RuntimeException(e);
-        }
+    @SneakyThrows
+    public Response<T> get() {
+        return futureResponse.get(30, SECONDS);
     }
 }

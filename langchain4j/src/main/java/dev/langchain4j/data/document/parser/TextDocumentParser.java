@@ -4,6 +4,8 @@ import dev.langchain4j.data.document.BlankDocumentException;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentParser;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 
@@ -25,10 +27,18 @@ public class TextDocumentParser implements DocumentParser {
     @Override
     public Document parse(InputStream inputStream) {
         try {
-            String text = new String(inputStream.readAllBytes(), charset);
-            if (text.isBlank()) {
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] data = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, bytesRead);
+            }
+
+            String text = new String(buffer.toByteArray(), charset);
+            if (text.trim().isEmpty()) {
                 throw new BlankDocumentException();
             }
+
             return Document.from(text);
         } catch (BlankDocumentException e) {
             throw e;

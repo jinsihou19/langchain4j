@@ -47,11 +47,10 @@ import static java.util.stream.Collectors.joining;
 public class DefaultContentInjector implements ContentInjector {
 
     public static final PromptTemplate DEFAULT_PROMPT_TEMPLATE = PromptTemplate.from(
-            """
-                    {{userMessage}}
-                    
-                    Answer using the following information:
-                    {{contents}}"""
+            "{{userMessage}}\n" +
+                    "\n" +
+                    "Answer using the following information:\n" +
+                    "{{contents}}"
     );
 
     private final PromptTemplate promptTemplate;
@@ -86,8 +85,8 @@ public class DefaultContentInjector implements ContentInjector {
         }
 
         Prompt prompt = createPrompt(chatMessage, contents);
-        if (chatMessage instanceof UserMessage message && isNotNullOrBlank(message.name())) {
-            return prompt.toUserMessage(message.name());
+        if (chatMessage instanceof UserMessage && isNotNullOrBlank(((UserMessage)chatMessage).name())) {
+            return prompt.toUserMessage(((UserMessage)chatMessage).name());
         }
 
         return prompt.toUserMessage();
@@ -163,7 +162,7 @@ public class DefaultContentInjector implements ContentInjector {
     protected String format(String segmentContent, String segmentMetadata) {
         return segmentMetadata.isEmpty()
                 ? segmentContent
-                : "content: %s\n%s".formatted(segmentContent, segmentMetadata);
+                : String.format("content: %s\n%s", segmentContent, segmentMetadata);
     }
 
     public static class DefaultContentInjectorBuilder {

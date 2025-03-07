@@ -52,7 +52,7 @@ public class OpenAiTokenizer implements Tokenizer {
      *
      * @deprecated Please use other constructors and specify the model name explicitly.
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public OpenAiTokenizer() {
         this(GPT_3_5_TURBO.toString());
     }
