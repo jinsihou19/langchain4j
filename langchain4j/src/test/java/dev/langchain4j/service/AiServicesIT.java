@@ -12,7 +12,6 @@ import dev.langchain4j.model.output.TokenUsage;
 import dev.langchain4j.model.output.structured.Description;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -46,8 +45,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
-@EnabledIfEnvironmentVariable(named = "OPENAI_API_KEY", matches = ".+")
-class AiServicesIT {
+public class AiServicesIT {
 
     @Spy
     ChatLanguageModel chatLanguageModel = OpenAiChatModel.builder()
@@ -358,18 +356,17 @@ class AiServicesIT {
         verify(chatLanguageModel).supportedCapabilities();
     }
 
-    record Address(
-            Integer streetNumber,
-            String street,
-            String city
-    ) {
+    static class Address {
+        private Integer streetNumber;
+        private String street;
+        private String city;
     }
 
-    static record Person(
-            String firstName,
-            String lastName,
-            LocalDate birthDate,
-            Address address) {
+    static class Person {
+        private String firstName;
+        private String lastName;
+        private LocalDate birthDate;
+        private Address address;
     }
 
     interface PersonExtractor {
@@ -462,13 +459,13 @@ class AiServicesIT {
     }
 
 
-    static record Recipe(
+    static class Recipe {
 
-            String title,
-            String description,
-            @Description("each step should be described in 4 words, steps should rhyme")
-            String[] steps,
-            Integer preparationTimeMinutes) {
+        private String title;
+        private String description;
+        @Description("each step should be described in 4 words, steps should rhyme")
+        private String[] steps;
+        private Integer preparationTimeMinutes;
     }
 
     interface Chef {
@@ -627,9 +624,41 @@ class AiServicesIT {
     }
 
     @StructuredPrompt("Create a recipe of a {{dish}} that can be prepared using only {{ingredients}}")
-    record CreateRecipePrompt(
-            String dish,
-            List<String> ingredients) {
+    static class CreateRecipePrompt {
+
+        private String dish;
+        private List<String> ingredients;
+
+        public CreateRecipePrompt(String dish, List<String> ingredients) {
+            this.dish = dish;
+            this.ingredients = ingredients;
+        }
+
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        static final class Builder {
+            private String dish;
+            private List<String> ingredients;
+
+            private Builder() {
+            }
+
+            public Builder dish(String dish) {
+                this.dish = dish;
+                return this;
+            }
+
+            public Builder ingredients(List<String> ingredients) {
+                this.ingredients = ingredients;
+                return this;
+            }
+
+            public CreateRecipePrompt build() {
+                return new CreateRecipePrompt(dish, ingredients);
+            }
+        }
     }
 
     @Test
@@ -637,10 +666,10 @@ class AiServicesIT {
 
         Chef chef = AiServices.create(Chef.class, chatLanguageModel);
 
-        CreateRecipePrompt prompt = new CreateRecipePrompt(
-                "salad",
-                List.of("cucumber", "tomato", "feta", "onion", "olives")
-        );
+        CreateRecipePrompt prompt = CreateRecipePrompt.builder()
+                .dish("salad")
+                .ingredients(asList("cucumber", "tomato", "feta", "onion", "olives"))
+                .build();
 
         Recipe recipe = chef.createRecipeFrom(prompt);
 
@@ -665,9 +694,11 @@ class AiServicesIT {
 
         Chef chef = AiServices.create(Chef.class, chatLanguageModel);
 
-        CreateRecipePrompt prompt = new CreateRecipePrompt(
-                "salad",
-                List.of("cucumber", "tomato", "feta", "onion", "olives"));
+        CreateRecipePrompt prompt = CreateRecipePrompt
+                .builder()
+                .dish("salad")
+                .ingredients(asList("cucumber", "tomato", "feta", "onion", "olives"))
+                .build();
 
         Recipe recipe = chef.createRecipeFrom(prompt, "funny");
 
@@ -694,9 +725,11 @@ class AiServicesIT {
 
         Chef chef = AiServices.create(Chef.class, chatLanguageModel);
 
-        CreateRecipePrompt prompt = new CreateRecipePrompt(
-                "salad",
-                List.of("cucumber", "tomato", "feta", "onion", "olives"));
+        CreateRecipePrompt prompt = CreateRecipePrompt
+                .builder()
+                .dish("salad")
+                .ingredients(asList("cucumber", "tomato", "feta", "onion", "olives"))
+                .build();
 
         Recipe recipe = chef.createRecipeFromUsingResource(prompt, "funny");
 
