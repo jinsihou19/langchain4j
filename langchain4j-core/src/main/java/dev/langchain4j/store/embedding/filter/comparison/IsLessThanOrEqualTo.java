@@ -2,6 +2,7 @@ package dev.langchain4j.store.embedding.filter.comparison;
 
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.store.embedding.filter.Filter;
+import dev.langchain4j.store.embedding.filter.logical.Or;
 
 import java.util.Objects;
 
@@ -30,10 +31,11 @@ public class IsLessThanOrEqualTo implements Filter {
 
     @Override
     public boolean test(Object object) {
-        if (!(object instanceof Metadata metadata)) {
+        if (!(object instanceof Metadata)) {
             return false;
         }
 
+        Metadata metadata = (Metadata) object;
         if (!metadata.containsKey(key)) {
             return false;
         }
@@ -51,8 +53,8 @@ public class IsLessThanOrEqualTo implements Filter {
 
     public boolean equals(final Object o) {
         if (o == this) return true;
-        if (!(o instanceof IsLessThanOrEqualTo other)) return false;
-
+        if (!(o instanceof IsLessThanOrEqualTo)) return false;
+        IsLessThanOrEqualTo other = (IsLessThanOrEqualTo) o;
         return Objects.equals(this.key, other.key)
                 && Objects.equals(this.comparisonValue, other.comparisonValue);
     }

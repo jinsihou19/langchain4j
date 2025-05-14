@@ -9,6 +9,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,7 +22,7 @@ public class CustomMimeTypesFileTypeDetectorTest {
         CustomMimeTypesFileTypeDetector detector = new CustomMimeTypesFileTypeDetector();
 
         // when
-        Path path = Path.of("/foo/bar/index.html");
+        Path path = Paths.get("/foo/bar/index.html");
         String mimeType = detector.probeContentType(path);
 
         // then

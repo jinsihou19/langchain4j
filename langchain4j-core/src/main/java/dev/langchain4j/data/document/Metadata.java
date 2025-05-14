@@ -93,7 +93,7 @@ public class Metadata {
      * @deprecated as of 0.31.0, use {@link #getString(String)}, {@link #getInteger(String)}, {@link #getLong(String)},
      * {@link #getFloat(String)}, {@link #getDouble(String)} instead.
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public String get(String key) {
         Object value = metadata.get(key);
         if (value != null) {
@@ -116,8 +116,8 @@ public class Metadata {
         }
 
         Object value = metadata.get(key);
-        if (value instanceof String string) {
-            return string;
+        if (value instanceof String) {
+            return (String) value;
         }
 
         throw runtime("Metadata entry with the key '%s' has a value of '%s' and type '%s'. " +
@@ -137,11 +137,11 @@ public class Metadata {
         }
 
         Object value = metadata.get(key);
-        if (value instanceof UUID iD) {
-            return iD;
+        if (value instanceof UUID) {
+            return (UUID) value;
         }
-        if (value instanceof String string) {
-            return UUID.fromString(string);
+        if (value instanceof String) {
+            return UUID.fromString((String)value);
         }
 
         throw runtime("Metadata entry with the key '%s' has a value of '%s' and type '%s'. " +
@@ -172,8 +172,8 @@ public class Metadata {
         Object value = metadata.get(key);
         if (value instanceof String) {
             return Integer.parseInt(value.toString());
-        } else if (value instanceof Number number) {
-            return number.intValue();
+        } else if (value instanceof Number) {
+            return ((Number) value).intValue();
         }
 
         throw runtime("Metadata entry with the key '%s' has a value of '%s' and type '%s'. " +
@@ -204,8 +204,8 @@ public class Metadata {
         Object value = metadata.get(key);
         if (value instanceof String) {
             return Long.parseLong(value.toString());
-        } else if (value instanceof Number number) {
-            return number.longValue();
+        } else if (value instanceof Number) {
+            return ((Number) value).longValue();
         }
 
         throw runtime("Metadata entry with the key '%s' has a value of '%s' and type '%s'. " +
@@ -236,8 +236,8 @@ public class Metadata {
         Object value = metadata.get(key);
         if (value instanceof String) {
             return Float.parseFloat(value.toString());
-        } else if (value instanceof Number number) {
-            return number.floatValue();
+        } else if (value instanceof Number) {
+            return ((Number) value).floatValue();
         }
 
         throw runtime("Metadata entry with the key '%s' has a value of '%s' and type '%s'. " +
@@ -268,8 +268,8 @@ public class Metadata {
         Object value = metadata.get(key);
         if (value instanceof String) {
             return Double.parseDouble(value.toString());
-        } else if (value instanceof Number number) {
-            return number.doubleValue();
+        } else if (value instanceof Number) {
+            return ((Number) value).doubleValue();
         }
 
         throw runtime("Metadata entry with the key '%s' has a value of '%s' and type '%s'. " +
@@ -295,7 +295,7 @@ public class Metadata {
      * @deprecated as of 0.31.0, use {@link #put(String, String)}, {@link #put(String, int)}, {@link #put(String, long)},
      * {@link #put(String, float)}, {@link #put(String, double)} instead.
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public Metadata add(String key, Object value) {
         return put(key, value.toString());
     }
@@ -309,7 +309,7 @@ public class Metadata {
      * @deprecated as of 0.31.0, use {@link #put(String, String)}, {@link #put(String, int)}, {@link #put(String, long)},
      * {@link #put(String, float)}, {@link #put(String, double)} instead.
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public Metadata add(String key, String value) {
         validate(key, value);
         this.metadata.put(key, value);
@@ -420,7 +420,7 @@ public class Metadata {
      * @return the metadata as a map of key-value pairs.
      * @deprecated as of 0.31.0, use {@link #toMap()} instead.
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public Map<String, String> asMap() {
         Map<String, String> map = new HashMap<>();
         for (Map.Entry<String, Object> entry : metadata.entrySet()) {
@@ -475,7 +475,7 @@ public class Metadata {
      * @return a Metadata object
      * @deprecated Use {@link #from(String, String)} instead
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public static Metadata from(String key, Object value) {
         return new Metadata().add(key, value);
     }
@@ -507,7 +507,7 @@ public class Metadata {
      * @return a Metadata object
      * @deprecated Use {@link #metadata(String, String)} instead
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public static Metadata metadata(String key, Object value) {
         return from(key, value);
     }
