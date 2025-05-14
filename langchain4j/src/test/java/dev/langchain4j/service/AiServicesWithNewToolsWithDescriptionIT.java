@@ -14,7 +14,6 @@ import dev.langchain4j.model.chat.request.json.JsonStringSchema;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.output.Response;
 import dev.langchain4j.model.output.structured.Description;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -43,7 +42,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
-@EnabledIfEnvironmentVariable(named = "OPENAI_API_KEY", matches = ".+")
 class AiServicesWithNewToolsWithDescriptionIT {
 
     @Captor
@@ -123,25 +121,30 @@ class AiServicesWithNewToolsWithDescriptionIT {
     static class ToolWithPojoParameter {
 
         @Description("a person")
-        record Person(
+        static class Person {
 
-                @Description("a name")
-                String name,
+            @Description("a name")
+            String name;
 
-                @Description("an age")
-                int age,
+            @Description("an age")
+            int age;
 
-                @Description("a height")
-                Double height,
+            @Description("a height")
+            Double height;
 
-                @Description("is married")
-                boolean married
-        ) {
+            @Description("is married")
+            boolean married;
+
+            public Person(String name, int age, Double height, boolean married) {
+                this.name = name;
+                this.age = age;
+                this.height = height;
+                this.married = married;
+            }
         }
 
         @Tool("processes a person")
         void process(@P("a person 2") Person person) {
-            // this method is empty
         }
 
         static JsonSchemaElement EXPECTED_SCHEMA = JsonObjectSchema.builder()
@@ -196,19 +199,29 @@ class AiServicesWithNewToolsWithDescriptionIT {
     static class ToolWithNestedPojoParameter {
 
         @Description("a person")
-        record Person(
+        static class Person {
 
-                @Description("a name")
-                String name,
+            @Description("a name")
+            String name;
 
-                @Description("an address 2")
-                Address address) {
+            @Description("an address 2")
+            Address address;
+
+            public Person(String name, Address address) {
+                this.name = name;
+                this.address = address;
+            }
         }
 
         @Description("an address")
-        record Address(
-                @Description("a city")
-                String city) {
+        static class Address {
+
+            @Description("a city")
+            String city;
+
+            public Address(String city) {
+                this.city = city;
+            }
         }
 
         @Tool("processes a person")
@@ -268,18 +281,22 @@ class AiServicesWithNewToolsWithDescriptionIT {
     static class ToolWithRecursion {
 
         @Description("a person")
-        record Person(
-                @Description("a name")
-                String name,
+        static class Person {
 
-                @Description("a list of person")
-                List<Person> children
-        ) {
+            @Description("a name")
+            String name;
+
+            @Description("a list of person")
+            List<Person> children;
+
+            public Person(String name, List<Person> children) {
+                this.name = name;
+                this.children = children;
+            }
         }
 
         @Tool("processes a person")
         void process(@P("a person 2") Person person) {
-            // this method is empty
         }
 
         static final String REFERENCE = generateUUIDFrom(Person.class.getName());
@@ -411,7 +428,6 @@ class AiServicesWithNewToolsWithDescriptionIT {
 
         @Tool("processes ages")
         void process(@P("map from name to age") Map<String, Integer> ages) {
-            // this method is empty
         }
 
         static ToolSpecification EXPECTED_SPECIFICATION = ToolSpecification.builder()
@@ -446,7 +462,7 @@ class AiServicesWithNewToolsWithDescriptionIT {
         assistant.chat(text);
 
         // then
-        verify(tool).process(new HashMap<>() {{
+        verify(tool).process(new HashMap<String, Integer>() {{
             put("Klaus", 42);
             put("Francine", 47);
         }});
