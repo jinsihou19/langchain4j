@@ -2,6 +2,8 @@ package dev.langchain4j.model;
 
 import dev.langchain4j.model.output.Response;
 
+import java.util.function.Consumer;
+
 /**
  * Represents a handler for streaming responses from a language model.
  * The handler is invoked each time the model generates a new token in a textual response.
@@ -18,6 +20,15 @@ public interface StreamingResponseHandler<T> {
      * @param token The newly generated token, which is a part of the complete response.
      */
     void onNext(String token);
+
+    /**
+     * Invoked each time the language model generates a new reasoning token in a textual response.
+     *
+     * @param token The newly generated token, which is a part of the complete response.
+     */
+    default void onReasoningNext(String token){
+
+    }
 
     /**
      * Invoked when the language model has finished streaming a response.

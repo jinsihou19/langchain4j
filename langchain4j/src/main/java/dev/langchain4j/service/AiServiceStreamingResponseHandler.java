@@ -33,6 +33,8 @@ class AiServiceStreamingResponseHandler implements StreamingResponseHandler<AiMe
     private final Object memoryId;
 
     private final Consumer<String> tokenHandler;
+    private final Consumer<String> reasoningTokenHandler;
+
     private final Consumer<ToolExecution> toolExecutionHandler;
     private final Consumer<Response<AiMessage>> completionHandler;
 
@@ -47,6 +49,7 @@ class AiServiceStreamingResponseHandler implements StreamingResponseHandler<AiMe
     AiServiceStreamingResponseHandler(AiServiceContext context,
                                       Object memoryId,
                                       Consumer<String> tokenHandler,
+                                      Consumer<String> reasoningTokenHandler,
                                       Consumer<ToolExecution> toolExecutionHandler,
                                       Consumer<Response<AiMessage>> completionHandler,
                                       Consumer<Throwable> errorHandler,
@@ -58,6 +61,7 @@ class AiServiceStreamingResponseHandler implements StreamingResponseHandler<AiMe
         this.memoryId = ensureNotNull(memoryId, "memoryId");
 
         this.tokenHandler = ensureNotNull(tokenHandler, "tokenHandler");
+        this.reasoningTokenHandler = reasoningTokenHandler;
         this.completionHandler = completionHandler;
         this.toolExecutionHandler = toolExecutionHandler;
         this.errorHandler = errorHandler;
@@ -72,6 +76,13 @@ class AiServiceStreamingResponseHandler implements StreamingResponseHandler<AiMe
     @Override
     public void onNext(String token) {
         tokenHandler.accept(token);
+    }
+
+    @Override
+    public void onReasoningNext(String token) {
+        if (reasoningTokenHandler != null) {
+            reasoningTokenHandler.accept(token);
+        }
     }
 
     @Override
@@ -107,6 +118,7 @@ class AiServiceStreamingResponseHandler implements StreamingResponseHandler<AiMe
                             context,
                             memoryId,
                             tokenHandler,
+                            reasoningTokenHandler,
                             toolExecutionHandler,
                             completionHandler,
                             errorHandler,

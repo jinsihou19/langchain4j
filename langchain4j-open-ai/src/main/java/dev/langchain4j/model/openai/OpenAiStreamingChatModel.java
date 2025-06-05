@@ -11,6 +11,7 @@ import dev.ai4j.openai4j.shared.StreamOptions;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.internal.Utils;
 import dev.langchain4j.model.StreamingResponseHandler;
 import dev.langchain4j.model.Tokenizer;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
@@ -278,8 +279,13 @@ public class OpenAiStreamingChatModel implements StreamingChatLanguageModel, Tok
         }
         Delta delta = choices.get(0).delta();
         String content = delta.content();
-        if (content != null) {
+        if (Utils.isNotNullOrEmpty(content)) {
             handler.onNext(content);
+            return;
+        }
+        String reasoningContent = delta.reasoningContent();
+        if (Utils.isNotNullOrEmpty(reasoningContent)) {
+            handler.onReasoningNext(reasoningContent);
         }
     }
 

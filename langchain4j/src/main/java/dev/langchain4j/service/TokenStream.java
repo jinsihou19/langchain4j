@@ -25,6 +25,14 @@ public interface TokenStream {
     TokenStream onNext(Consumer<String> tokenHandler);
 
     /**
+     * The provided consumer will be invoked every time a new reasoning token from a language model is available.
+     *
+     * @param tokenHandler lambda that consumes tokens of the response
+     * @return token stream instance used to configure or start stream processing
+     */
+    TokenStream onReasoningNext(Consumer<String> tokenHandler);
+
+    /**
      * The provided consumer will be invoked if any {@link Content}s are retrieved using {@link RetrievalAugmentor}.
      * <p>
      * The invocation happens before any call is made to the language model.

@@ -14,7 +14,7 @@
     <parent>
         <groupId>dev.langchain4j</groupId>
         <artifactId>langchain4j-parent</artifactId>
-        <version>0.36.2-jdk8</version>
+        <version>0.36.3-jdk8</version>
         <relativePath>../langchain4j-parent/pom.xml</relativePath>
     </parent>
 

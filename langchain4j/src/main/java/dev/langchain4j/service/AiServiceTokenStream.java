@@ -31,6 +31,7 @@ public class AiServiceTokenStream implements TokenStream {
     private final Object memoryId;
 
     private Consumer<String> tokenHandler;
+    private Consumer<String> reasoningTokenHandler;
     private Consumer<List<Content>> contentsHandler;
     private Consumer<ToolExecution> toolExecutionHandler;
     private Consumer<Throwable> errorHandler;
@@ -62,6 +63,12 @@ public class AiServiceTokenStream implements TokenStream {
     public TokenStream onNext(Consumer<String> tokenHandler) {
         this.tokenHandler = tokenHandler;
         this.onNextInvoked++;
+        return this;
+    }
+
+    @Override
+    public TokenStream onReasoningNext(Consumer<String> reasoningTokenHandler) {
+        this.reasoningTokenHandler = reasoningTokenHandler;
         return this;
     }
 
@@ -108,6 +115,7 @@ public class AiServiceTokenStream implements TokenStream {
                 context,
                 memoryId,
                 tokenHandler,
+                reasoningTokenHandler,
                 toolExecutionHandler,
                 completionHandler,
                 errorHandler,
