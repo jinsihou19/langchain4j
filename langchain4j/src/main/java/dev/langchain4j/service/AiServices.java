@@ -6,6 +6,7 @@ import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.exception.IllegalConfigurationException;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.ChatMemoryProvider;
 import dev.langchain4j.model.chat.ChatLanguageModel;
@@ -38,6 +39,7 @@ import java.util.function.Function;
 
 import static dev.langchain4j.agent.tool.ToolSpecifications.toolSpecificationFrom;
 import static dev.langchain4j.exception.IllegalConfigurationException.illegalConfiguration;
+import static dev.langchain4j.internal.Utils.getAnnotatedMethod;
 import static dev.langchain4j.internal.ValidationUtils.ensureNotNull;
 import static dev.langchain4j.spi.ServiceHelper.loadFactories;
 import static java.util.Arrays.asList;
@@ -344,15 +346,22 @@ public abstract class AiServices<T> {
             }
 
             for (Method method : objectWithTool.getClass().getDeclaredMethods()) {
-                if (method.isAnnotationPresent(Tool.class)) {
-                    ToolSpecification toolSpecification = toolSpecificationFrom(method);
-                    context.toolSpecifications.add(toolSpecification);
-                    context.toolExecutors.put(toolSpecification.name(), new DefaultToolExecutor(objectWithTool, method));
-                }
+                getAnnotatedMethod(method, Tool.class)
+                        .ifPresent(toolMethod -> processToolMethod(objectWithTool, toolMethod));
             }
         }
 
         return this;
+    }
+
+    private void processToolMethod(Object objectWithTool, Method method) {
+        ToolSpecification toolSpecification = toolSpecificationFrom(method);
+        if (context.toolExecutors.containsKey(toolSpecification.name())) {
+            throw new IllegalConfigurationException(
+                    "Duplicated definition for tool: " + toolSpecification.name());
+        }
+        context.toolSpecifications.add(toolSpecification);
+        context.toolExecutors.put(toolSpecification.name(), new DefaultToolExecutor(objectWithTool, method));
     }
 
     /**
