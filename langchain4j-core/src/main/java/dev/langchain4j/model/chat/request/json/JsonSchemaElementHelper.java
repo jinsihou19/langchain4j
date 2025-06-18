@@ -1,5 +1,6 @@
 package dev.langchain4j.model.chat.request.json;
 
+import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.model.output.structured.Description;
 
 import java.lang.reflect.Field;
@@ -94,6 +95,7 @@ public class JsonSchemaElementHelper {
         visited.put(type, new VisitedClassMetadata(jsonReferenceSchema, reference, false));
 
         Map<String, JsonSchemaElement> properties = new LinkedHashMap<>();
+        ArrayList<String> requiredArray = new ArrayList<>();
         for (Field field : type.getDeclaredFields()) {
             String fieldName = field.getName();
             if (isStatic(field.getModifiers()) || fieldName.equals("__$hits$__") || fieldName.startsWith("this$")) {
@@ -107,12 +109,16 @@ public class JsonSchemaElementHelper {
                     visited
             );
             properties.put(fieldName, jsonSchemaElement);
+            P annotation = field.getAnnotation(P.class);
+            if (annotation == null || annotation.required()) {
+                requiredArray.add(fieldName);
+            }
         }
 
         JsonObjectSchema.Builder builder = JsonObjectSchema.builder()
                 .description(Optional.ofNullable(description).orElse(descriptionFrom(type)))
                 .properties(properties)
-                .required(new ArrayList<>(properties.keySet()));
+                .required(requiredArray);
 
         visited.get(type).jsonSchemaElement = builder.build();
 
