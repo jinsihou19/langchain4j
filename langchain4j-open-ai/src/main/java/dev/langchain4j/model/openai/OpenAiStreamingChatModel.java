@@ -1,6 +1,7 @@
 package dev.langchain4j.model.openai;
 
 import dev.ai4j.openai4j.OpenAiClient;
+import dev.ai4j.openai4j.ResponseHandle;
 import dev.ai4j.openai4j.chat.ChatCompletionChoice;
 import dev.ai4j.openai4j.chat.ChatCompletionRequest;
 import dev.ai4j.openai4j.chat.ChatCompletionResponse;
@@ -76,6 +77,7 @@ public class OpenAiStreamingChatModel implements StreamingChatLanguageModel, Tok
     private final Boolean parallelToolCalls;
     private final Tokenizer tokenizer;
     private final List<ChatModelListener> listeners;
+    private ResponseHandle responseHandle;
 
     public OpenAiStreamingChatModel(String baseUrl,
                                     String apiKey,
@@ -207,7 +209,7 @@ public class OpenAiStreamingChatModel implements StreamingChatLanguageModel, Tok
         AtomicReference<String> responseId = new AtomicReference<>();
         AtomicReference<String> responseModel = new AtomicReference<>();
 
-        client.chatCompletion(request)
+        responseHandle = client.chatCompletion(request)
                 .onPartialResponse(partialResponse -> {
                     responseBuilder.append(partialResponse);
                     handle(partialResponse, handler);
@@ -269,6 +271,13 @@ public class OpenAiStreamingChatModel implements StreamingChatLanguageModel, Tok
                     handler.onError(error);
                 })
                 .execute();
+    }
+
+    @Override
+    public void cancel() {
+        if (responseHandle != null) {
+            responseHandle.cancel();
+        }
     }
 
     private static void handle(ChatCompletionResponse partialResponse,

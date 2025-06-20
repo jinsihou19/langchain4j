@@ -6,7 +6,7 @@
 
     <groupId>dev.langchain4j</groupId>
     <artifactId>langchain4j-parent</artifactId>
-    <version>0.36.3-jdk8</version>
+    <version>0.36.5-jdk8</version>
     <packaging>pom</packaging>
 
     <name>LangChain4j :: Parent POM</name>
