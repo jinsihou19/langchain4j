@@ -55,7 +55,15 @@ public class DefaultToolExecutor implements ToolExecutor {
 
         // TODO ensure this method never throws exceptions
 
-        Map<String, Object> argumentsMap = argumentsAsMap(toolExecutionRequest.arguments());
+        Map<String, Object> argumentsMap;
+
+        try {
+            argumentsMap = argumentsAsMap(toolExecutionRequest.arguments());
+        } catch (Exception e) {
+            log.error("Error while parser arguments", e);
+            return e.getMessage();
+        }
+
         Object[] arguments = prepareArguments(method, argumentsMap, memoryId);
         try {
             String result = execute(arguments);
