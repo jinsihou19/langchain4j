@@ -1,5 +1,6 @@
 package dev.langchain4j.service;
 
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
@@ -33,6 +34,7 @@ public class AiServiceTokenStream implements TokenStream {
     private Consumer<String> tokenHandler;
     private Consumer<String> reasoningTokenHandler;
     private Consumer<List<Content>> contentsHandler;
+    private Consumer<ToolExecutionRequest> beforeToolExecuteHandler;
     private Consumer<ToolExecution> toolExecutionHandler;
     private Consumer<Throwable> errorHandler;
     private Consumer<Response<AiMessage>> completionHandler;
@@ -80,6 +82,12 @@ public class AiServiceTokenStream implements TokenStream {
     }
 
     @Override
+    public TokenStream beforeToolExecute(final Consumer<ToolExecutionRequest> beforeToolExecuteHandler) {
+        this.beforeToolExecuteHandler = beforeToolExecuteHandler;
+        return this;
+    }
+
+    @Override
     public TokenStream onToolExecuted(Consumer<ToolExecution> toolExecutionHandler) {
         this.toolExecutionHandler = toolExecutionHandler;
         this.onToolExecutedInvoked++;
@@ -116,6 +124,7 @@ public class AiServiceTokenStream implements TokenStream {
                 memoryId,
                 tokenHandler,
                 reasoningTokenHandler,
+                beforeToolExecuteHandler,
                 toolExecutionHandler,
                 completionHandler,
                 errorHandler,

@@ -1,5 +1,6 @@
 package dev.langchain4j.service;
 
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.model.output.Response;
 import dev.langchain4j.rag.RetrievalAugmentor;
@@ -41,6 +42,16 @@ public interface TokenStream {
      * @return token stream instance used to configure or start stream processing
      */
     TokenStream onRetrieved(Consumer<List<Content>> contentHandler);
+
+    /**
+     * The provided consumer will be invoked before tool is executed.
+     * <p>
+     * The invocation happens before the tool method is executed.
+     *
+     * @param beforeToolExecuteHandler lambda that consumes {@link ToolExecutionRequest}
+     * @return token stream instance used to configure or start stream processing
+     */
+    TokenStream beforeToolExecute(Consumer<ToolExecutionRequest> beforeToolExecuteHandler);
 
     /**
      * The provided consumer will be invoked if any tool is executed.

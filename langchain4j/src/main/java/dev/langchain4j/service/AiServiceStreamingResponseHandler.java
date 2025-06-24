@@ -35,6 +35,7 @@ class AiServiceStreamingResponseHandler implements StreamingResponseHandler<AiMe
     private final Consumer<String> tokenHandler;
     private final Consumer<String> reasoningTokenHandler;
 
+    private final Consumer<ToolExecutionRequest> beforeToolExecuteHandler;
     private final Consumer<ToolExecution> toolExecutionHandler;
     private final Consumer<Response<AiMessage>> completionHandler;
 
@@ -50,6 +51,7 @@ class AiServiceStreamingResponseHandler implements StreamingResponseHandler<AiMe
                                       Object memoryId,
                                       Consumer<String> tokenHandler,
                                       Consumer<String> reasoningTokenHandler,
+                                      Consumer<ToolExecutionRequest> beforeToolExecuteHandler,
                                       Consumer<ToolExecution> toolExecutionHandler,
                                       Consumer<Response<AiMessage>> completionHandler,
                                       Consumer<Throwable> errorHandler,
@@ -63,6 +65,7 @@ class AiServiceStreamingResponseHandler implements StreamingResponseHandler<AiMe
         this.tokenHandler = ensureNotNull(tokenHandler, "tokenHandler");
         this.reasoningTokenHandler = reasoningTokenHandler;
         this.completionHandler = completionHandler;
+        this.beforeToolExecuteHandler = beforeToolExecuteHandler;
         this.toolExecutionHandler = toolExecutionHandler;
         this.errorHandler = errorHandler;
 
@@ -95,6 +98,11 @@ class AiServiceStreamingResponseHandler implements StreamingResponseHandler<AiMe
             for (ToolExecutionRequest toolExecutionRequest : aiMessage.toolExecutionRequests()) {
                 String toolName = toolExecutionRequest.name();
                 ToolExecutor toolExecutor = toolExecutors.get(toolName);
+
+                if (beforeToolExecuteHandler != null) {
+                    beforeToolExecuteHandler.accept(toolExecutionRequest);
+                }
+
                 String toolExecutionResult = toolExecutor.execute(toolExecutionRequest, memoryId);
                 ToolExecutionResultMessage toolExecutionResultMessage = ToolExecutionResultMessage.from(
                         toolExecutionRequest,
@@ -119,6 +127,7 @@ class AiServiceStreamingResponseHandler implements StreamingResponseHandler<AiMe
                             memoryId,
                             tokenHandler,
                             reasoningTokenHandler,
+                            beforeToolExecuteHandler,
                             toolExecutionHandler,
                             completionHandler,
                             errorHandler,
