@@ -6,6 +6,7 @@ import dev.ai4j.openai4j.chat.ChatCompletionRequest;
 import dev.ai4j.openai4j.chat.ChatCompletionResponse;
 import dev.ai4j.openai4j.chat.ResponseFormat;
 import dev.ai4j.openai4j.chat.ResponseFormatType;
+
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
@@ -81,6 +82,8 @@ public class OpenAiChatModel implements ChatLanguageModel, TokenCountEstimator {
     private final String user;
     private final Boolean strictTools;
     private final Boolean parallelToolCalls;
+    private final Boolean thinking;
+    private final String reasoningEffort;
     private final Integer maxRetries;
     private final Tokenizer tokenizer;
     private final List<ChatModelListener> listeners;
@@ -103,6 +106,8 @@ public class OpenAiChatModel implements ChatLanguageModel, TokenCountEstimator {
                            String user,
                            Boolean strictTools,
                            Boolean parallelToolCalls,
+                           Boolean thinking,
+                           String reasoningEffort,
                            Duration timeout,
                            Integer maxRetries,
                            Proxy proxy,
@@ -150,6 +155,8 @@ public class OpenAiChatModel implements ChatLanguageModel, TokenCountEstimator {
         this.user = user;
         this.strictTools = getOrDefault(strictTools, false);
         this.parallelToolCalls = parallelToolCalls;
+        this.thinking = thinking;
+        this.reasoningEffort = reasoningEffort;
         this.maxRetries = getOrDefault(maxRetries, 3);
         this.tokenizer = getOrDefault(tokenizer, OpenAiTokenizer::new);
         this.listeners = listeners == null ? emptyList() : new ArrayList<>(listeners);
@@ -223,7 +230,9 @@ public class OpenAiChatModel implements ChatLanguageModel, TokenCountEstimator {
                 .responseFormat(responseFormat)
                 .seed(seed)
                 .user(user)
-                .parallelToolCalls(parallelToolCalls);
+                .parallelToolCalls(parallelToolCalls)
+                .thinking(thinking)
+                .reasoningEffort(reasoningEffort);
 
         if (toolSpecifications != null && !toolSpecifications.isEmpty()) {
             requestBuilder.tools(toTools(toolSpecifications, strictTools));
@@ -343,6 +352,8 @@ public class OpenAiChatModel implements ChatLanguageModel, TokenCountEstimator {
         private String user;
         private Boolean strictTools;
         private Boolean parallelToolCalls;
+        private Boolean thinking;
+        private String reasoningEffort;
         private Duration timeout;
         private Integer maxRetries;
         private Proxy proxy;
@@ -451,6 +462,16 @@ public class OpenAiChatModel implements ChatLanguageModel, TokenCountEstimator {
             return this;
         }
 
+        public OpenAiChatModelBuilder thinking(Boolean thinking) {
+            this.thinking = thinking;
+            return this;
+        }
+
+        public OpenAiChatModelBuilder reasoningEffort(String reasoningEffort) {
+            this.reasoningEffort = reasoningEffort;
+            return this;
+        }
+
         public OpenAiChatModelBuilder timeout(Duration timeout) {
             this.timeout = timeout;
             return this;
@@ -511,6 +532,8 @@ public class OpenAiChatModel implements ChatLanguageModel, TokenCountEstimator {
                     this.user,
                     this.strictTools,
                     this.parallelToolCalls,
+                    this.thinking,
+                    this.reasoningEffort,
                     this.timeout,
                     this.maxRetries,
                     this.proxy,

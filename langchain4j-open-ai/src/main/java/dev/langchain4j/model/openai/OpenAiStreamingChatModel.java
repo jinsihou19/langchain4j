@@ -8,6 +8,7 @@ import dev.ai4j.openai4j.chat.ChatCompletionResponse;
 import dev.ai4j.openai4j.chat.Delta;
 import dev.ai4j.openai4j.chat.ResponseFormat;
 import dev.ai4j.openai4j.chat.ResponseFormatType;
+
 import dev.ai4j.openai4j.shared.StreamOptions;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.AiMessage;
@@ -75,6 +76,8 @@ public class OpenAiStreamingChatModel implements StreamingChatLanguageModel, Tok
     private final String user;
     private final Boolean strictTools;
     private final Boolean parallelToolCalls;
+    private final Boolean thinking;
+    private final String reasoningEffort;
     private final Tokenizer tokenizer;
     private final List<ChatModelListener> listeners;
     private ResponseHandle responseHandle;
@@ -96,6 +99,8 @@ public class OpenAiStreamingChatModel implements StreamingChatLanguageModel, Tok
                                     String user,
                                     Boolean strictTools,
                                     Boolean parallelToolCalls,
+                                    Boolean thinking,
+                                    String reasoningEffort,
                                     Duration timeout,
                                     Proxy proxy,
                                     Boolean logRequests,
@@ -136,6 +141,8 @@ public class OpenAiStreamingChatModel implements StreamingChatLanguageModel, Tok
         this.user = user;
         this.strictTools = getOrDefault(strictTools, false);
         this.parallelToolCalls = parallelToolCalls;
+        this.thinking = thinking;
+        this.reasoningEffort = reasoningEffort;
         this.tokenizer = getOrDefault(tokenizer, OpenAiTokenizer::new);
         this.listeners = listeners == null ? emptyList() : new ArrayList<>(listeners);
     }
@@ -182,7 +189,9 @@ public class OpenAiStreamingChatModel implements StreamingChatLanguageModel, Tok
                 .responseFormat(responseFormat)
                 .seed(seed)
                 .user(user)
-                .parallelToolCalls(parallelToolCalls);
+                .parallelToolCalls(parallelToolCalls)
+                .thinking(thinking)
+                .reasoningEffort(reasoningEffort);
 
         if (toolThatMustBeExecuted != null) {
             requestBuilder.tools(toTools(singletonList(toolThatMustBeExecuted), strictTools));
@@ -339,6 +348,8 @@ public class OpenAiStreamingChatModel implements StreamingChatLanguageModel, Tok
         private String user;
         private Boolean strictTools;
         private Boolean parallelToolCalls;
+        private Boolean thinking;
+        private String reasoningEffort;
         private Duration timeout;
         private Proxy proxy;
         private Boolean logRequests;
@@ -441,6 +452,16 @@ public class OpenAiStreamingChatModel implements StreamingChatLanguageModel, Tok
             return this;
         }
 
+        public OpenAiStreamingChatModelBuilder thinking(Boolean thinking) {
+            this.thinking = thinking;
+            return this;
+        }
+
+        public OpenAiStreamingChatModelBuilder reasoningEffort(String reasoningEffort) {
+            this.reasoningEffort = reasoningEffort;
+            return this;
+        }
+
         public OpenAiStreamingChatModelBuilder timeout(Duration timeout) {
             this.timeout = timeout;
             return this;
@@ -495,6 +516,8 @@ public class OpenAiStreamingChatModel implements StreamingChatLanguageModel, Tok
                     this.user,
                     this.strictTools,
                     this.parallelToolCalls,
+                    this.thinking,
+                    this.reasoningEffort,
                     this.timeout,
                     this.proxy,
                     this.logRequests,

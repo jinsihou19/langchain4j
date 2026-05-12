@@ -33,6 +33,7 @@ import static java.util.stream.Collectors.toList;
 public class OpenAiStreamingResponseBuilder {
 
     private final StringBuffer contentBuilder = new StringBuffer();
+    private final StringBuffer reasoningContentBuilder = new StringBuffer();
 
     private final StringBuffer toolNameBuilder = new StringBuffer();
     private final StringBuffer toolArgumentsBuilder = new StringBuffer();
@@ -70,6 +71,11 @@ public class OpenAiStreamingResponseBuilder {
         Delta delta = chatCompletionChoice.delta();
         if (delta == null) {
             return;
+        }
+
+        String reasoningContent = delta.reasoningContent();
+        if (!isNullOrEmpty(reasoningContent)) {
+            reasoningContentBuilder.append(reasoningContent);
         }
 
         String content = delta.content();
@@ -147,6 +153,7 @@ public class OpenAiStreamingResponseBuilder {
     public Response<AiMessage> build() {
 
         String text = contentBuilder.toString();
+        String thinking = reasoningContentBuilder.length() > 0 ? reasoningContentBuilder.toString() : null;
 
         String toolName = toolNameBuilder.toString();
         if (!toolName.isEmpty()) {
@@ -155,9 +162,9 @@ public class OpenAiStreamingResponseBuilder {
                     .arguments(toolArgumentsBuilder.toString())
                     .build();
 
-            AiMessage aiMessage = isNullOrBlank(text) ?
+            AiMessage aiMessage = (isNullOrBlank(text) && thinking == null) ?
                     AiMessage.from(toolExecutionRequest) :
-                    AiMessage.from(text, singletonList(toolExecutionRequest));
+                    AiMessage.fromWithThinking(text, thinking, singletonList(toolExecutionRequest));
 
             return Response.from(
                     aiMessage,
@@ -175,9 +182,9 @@ public class OpenAiStreamingResponseBuilder {
                             .build())
                     .collect(toList());
 
-            AiMessage aiMessage = isNullOrBlank(text) ?
+            AiMessage aiMessage = (isNullOrBlank(text) && thinking == null) ?
                     AiMessage.from(toolExecutionRequests) :
-                    AiMessage.from(text, toolExecutionRequests);
+                    AiMessage.fromWithThinking(text, thinking, toolExecutionRequests);
 
             return Response.from(
                     aiMessage,
@@ -186,9 +193,9 @@ public class OpenAiStreamingResponseBuilder {
             );
         }
 
-        if (!isNullOrBlank(text)) {
+        if (!isNullOrBlank(text) || thinking != null) {
             return Response.from(
-                    AiMessage.from(text),
+                    AiMessage.fromWithThinking(text, thinking),
                     tokenUsage,
                     finishReason
             );

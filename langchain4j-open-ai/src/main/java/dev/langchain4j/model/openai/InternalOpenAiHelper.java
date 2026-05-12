@@ -107,7 +107,10 @@ public class InternalOpenAiHelper {
             AiMessage aiMessage = (AiMessage) message;
 
             if (!aiMessage.hasToolExecutionRequests()) {
-                return AssistantMessage.from(aiMessage.text());
+                return AssistantMessage.builder()
+                        .content(aiMessage.text())
+                        .reasoningContent(aiMessage.thinking())
+                        .build();
             }
 
             ToolExecutionRequest toolExecutionRequest = aiMessage.toolExecutionRequests().get(0);
@@ -119,6 +122,7 @@ public class InternalOpenAiHelper {
 
                 return AssistantMessage.builder()
                         .functionCall(functionCall)
+                        .reasoningContent(aiMessage.thinking())
                         .build();
             }
 
@@ -136,6 +140,7 @@ public class InternalOpenAiHelper {
             return AssistantMessage.builder()
                     .content(aiMessage.text())
                     .toolCalls(toolCalls)
+                    .reasoningContent(aiMessage.thinking())
                     .build();
         }
 
@@ -423,6 +428,7 @@ public class InternalOpenAiHelper {
     public static AiMessage aiMessageFrom(ChatCompletionResponse response) {
         AssistantMessage assistantMessage = response.choices().get(0).message();
         String text = assistantMessage.content();
+        String thinking = assistantMessage.reasoningContent();
 
         List<ToolCall> toolCalls = assistantMessage.toolCalls();
         if (!isNullOrEmpty(toolCalls)) {
@@ -430,9 +436,10 @@ public class InternalOpenAiHelper {
                     .filter(toolCall -> toolCall.type() == FUNCTION)
                     .map(InternalOpenAiHelper::toToolExecutionRequest)
                     .collect(toList());
-            return isNullOrBlank(text) ?
-                    AiMessage.from(toolExecutionRequests) :
-                    AiMessage.from(text, toolExecutionRequests);
+            if (isNullOrBlank(text)) {
+                return AiMessage.from(toolExecutionRequests);
+            }
+            return AiMessage.fromWithThinking(text, thinking, toolExecutionRequests);
         }
 
         FunctionCall functionCall = assistantMessage.functionCall();
@@ -441,12 +448,13 @@ public class InternalOpenAiHelper {
                     .name(functionCall.name())
                     .arguments(functionCall.arguments())
                     .build();
-            return isNullOrBlank(text) ?
-                    AiMessage.from(toolExecutionRequest) :
-                    AiMessage.from(text, singletonList(toolExecutionRequest));
+            if (isNullOrBlank(text)) {
+                return AiMessage.from(toolExecutionRequest);
+            }
+            return AiMessage.fromWithThinking(text, thinking, singletonList(toolExecutionRequest));
         }
 
-        return AiMessage.from(text);
+        return AiMessage.fromWithThinking(text, thinking);
     }
 
     private static ToolExecutionRequest toToolExecutionRequest(ToolCall toolCall) {

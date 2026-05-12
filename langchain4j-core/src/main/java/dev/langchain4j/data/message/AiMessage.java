@@ -22,6 +22,7 @@ public class AiMessage implements ChatMessage {
 
     private final String text;
     private final List<ToolExecutionRequest> toolExecutionRequests;
+    private final String thinking;
 
     /**
      * Create a new {@link AiMessage} with the given text.
@@ -31,6 +32,7 @@ public class AiMessage implements ChatMessage {
     public AiMessage(String text) {
         this.text = ensureNotNull(text, "text");
         this.toolExecutionRequests = null;
+        this.thinking = null;
     }
 
     /**
@@ -41,6 +43,7 @@ public class AiMessage implements ChatMessage {
     public AiMessage(List<ToolExecutionRequest> toolExecutionRequests) {
         this.text = null;
         this.toolExecutionRequests = ensureNotEmpty(toolExecutionRequests, "toolExecutionRequests");
+        this.thinking = null;
     }
 
     /**
@@ -52,6 +55,32 @@ public class AiMessage implements ChatMessage {
     public AiMessage(String text, List<ToolExecutionRequest> toolExecutionRequests) {
         this.text = ensureNotBlank(text, "text");
         this.toolExecutionRequests = ensureNotEmpty(toolExecutionRequests, "toolExecutionRequests");
+        this.thinking = null;
+    }
+
+    /**
+     * Create a new {@link AiMessage} with the given text and thinking content.
+     *
+     * @param text    the text of the message.
+     * @param thinking the reasoning/thinking content (e.g. reasoning_content from DeepSeek).
+     */
+    public AiMessage(String text, String thinking) {
+        this.text = text;
+        this.toolExecutionRequests = null;
+        this.thinking = thinking;
+    }
+
+    /**
+     * Create a new {@link AiMessage} with the given text, thinking content and tool execution requests.
+     *
+     * @param text                  the text of the message.
+     * @param thinking              the reasoning/thinking content.
+     * @param toolExecutionRequests the tool execution requests of the message.
+     */
+    public AiMessage(String text, String thinking, List<ToolExecutionRequest> toolExecutionRequests) {
+        this.text = text;
+        this.thinking = thinking;
+        this.toolExecutionRequests = toolExecutionRequests;
     }
 
     /**
@@ -61,6 +90,15 @@ public class AiMessage implements ChatMessage {
      */
     public String text() {
         return text;
+    }
+
+    /**
+     * Get the thinking/reasoning content of the message (e.g. reasoning_content from DeepSeek thinking mode).
+     *
+     * @return the thinking/reasoning content, or {@code null} if not present.
+     */
+    public String thinking() {
+        return thinking;
     }
 
     /**
@@ -92,18 +130,20 @@ public class AiMessage implements ChatMessage {
         if (o == null || getClass() != o.getClass()) return false;
         AiMessage that = (AiMessage) o;
         return Objects.equals(this.text, that.text)
-            && Objects.equals(this.toolExecutionRequests, that.toolExecutionRequests);
+            && Objects.equals(this.toolExecutionRequests, that.toolExecutionRequests)
+            && Objects.equals(this.thinking, that.thinking);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(text, toolExecutionRequests);
+        return Objects.hash(text, toolExecutionRequests, thinking);
     }
 
     @Override
     public String toString() {
         return "AiMessage {" +
             " text = " + quoted(text) +
+            " thinking = " + quoted(thinking) +
             " toolExecutionRequests = " + toolExecutionRequests +
             " }";
     }
@@ -188,5 +228,28 @@ public class AiMessage implements ChatMessage {
      */
     public static AiMessage aiMessage(String text, List<ToolExecutionRequest> toolExecutionRequests) {
         return from(text, toolExecutionRequests);
+    }
+
+    /**
+     * Create a new {@link AiMessage} with the given text and thinking content.
+     *
+     * @param text    the text of the message.
+     * @param thinking the reasoning/thinking content.
+     * @return the new {@link AiMessage}.
+     */
+    public static AiMessage fromWithThinking(String text, String thinking) {
+        return new AiMessage(text, thinking);
+    }
+
+    /**
+     * Create a new {@link AiMessage} with thinking content, text and tool execution requests.
+     *
+     * @param text                  the text of the message.
+     * @param thinking              the reasoning/thinking content.
+     * @param toolExecutionRequests the tool execution requests of the message.
+     * @return the new {@link AiMessage}.
+     */
+    public static AiMessage fromWithThinking(String text, String thinking, List<ToolExecutionRequest> toolExecutionRequests) {
+        return new AiMessage(text, thinking, toolExecutionRequests);
     }
 }
